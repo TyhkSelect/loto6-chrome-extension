@@ -4,11 +4,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   const isSelectlotoPage =
     tab?.url?.includes('selectloto.jp') ||
-    tab?.url?.includes('loto6_saved_history_by_round_detail');
+    tab?.url?.includes('saved_history_by_round_detail');
 
   if (!isSelectlotoPage) {
     content.innerHTML =
-      '<div class="msg error">selectloto.jp の<br>LOTO6詳細ページで開いてください</div>';
+      '<div class="msg error">selectloto.jp の<br>抽せん回詳細ページで開いてください</div>';
     return;
   }
 
@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
-  const { drawRound, combinations } = result;
+  const { lotteryType, drawRound, combinations } = result;
 
   if (!combinations || combinations.length === 0) {
     content.innerHTML = '<div class="msg">組み合わせデータがありません</div>';
@@ -88,7 +88,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     await chrome.storage.local.set({
-      loto6_autofill: {
+      selectloto_autofill: {
+        lotteryType: lotteryType ?? 'loto6',
         drawRound,
         combinations: selected,
         timestamp: Date.now(),

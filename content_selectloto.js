@@ -1,4 +1,13 @@
-// selectloto.jp ページからLOTO6の組み合わせデータを読み取り、popupへ返す
+// selectloto.jp ページから組み合わせデータを読み取り、popupへ返す
+const NUMBER_COUNT = { loto6: 6, loto7: 7, miniloto: 5 };
+
+function detectLotteryType() {
+  const path = location.pathname + location.href;
+  if (path.includes('loto7'))    return 'loto7';
+  if (path.includes('miniloto')) return 'miniloto';
+  return 'loto6';
+}
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type !== 'GET_COMBINATIONS') return;
 
@@ -12,6 +21,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     return true;
   }
 
+  const lotteryType = detectLotteryType();
+  const expectedCount = NUMBER_COUNT[lotteryType];
   const drawRound = new URLSearchParams(location.search).get('draw_round') || '';
   const rows = document.querySelectorAll('#combinationTable tbody tr');
 
@@ -20,7 +31,6 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     const cells = tr.querySelectorAll('td');
     if (cells.length < 4) return;
 
-    // 数字はspan.circle-backgroundのテキストから取得
     const numberSpans = cells[2].querySelectorAll('.circle-background');
     const numbers = [...numberSpans]
       .map(s => parseInt(s.textContent.trim(), 10))
@@ -29,11 +39,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     const kuchiCount = parseInt(cells[3].textContent.trim(), 10) || 1;
     const setNumber = cells[1].textContent.trim();
 
-    if (numbers.length === 6) {
+    if (numbers.length === expectedCount) {
       combinations.push({ setNumber, numbers, kuchiCount });
     }
   });
 
-  sendResponse({ drawRound, combinations });
+  sendResponse({ lotteryType, drawRound, combinations });
   return true;
 });

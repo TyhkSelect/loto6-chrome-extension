@@ -1,6 +1,17 @@
 const BATCH_SIZE = 25;
-const AUTOFILL_KEY = 'loto6_autofill';
+const AUTOFILL_KEY = 'selectloto_autofill';
 let autofillCancelled = false;
+
+const GLONAVI_FORM = {
+  loto6:    'glonaviLoto6Form',
+  loto7:    'glonaviLoto7Form',
+  miniloto: 'glonaviMinilotoForm',
+};
+const LOTTERY_LABEL = {
+  loto6:    'LOTO6',
+  loto7:    'LOTO7',
+  miniloto: 'ミニロト',
+};
 
 (async () => {
   const stored = await chrome.storage.local.get(AUTOFILL_KEY);
@@ -12,8 +23,11 @@ let autofillCancelled = false;
     return;
   }
 
+  const lotteryType = autofill.lotteryType ?? 'loto6';
+  const label = LOTTERY_LABEL[lotteryType] ?? 'LOTO';
+
   // ページ遷移直後に即座にUIを表示（検出前に表示することで消灯時間を最小化）
-  const statusUI = createStatusUI();
+  const statusUI = createStatusUI(label);
   document.body.appendChild(statusUI);
   const ci = autofill.currentIndex ?? 0;
   const tot = autofill.combinations.length;
@@ -22,27 +36,27 @@ let autofillCancelled = false;
   // ① 確認ページ検出（「買い物を続ける」ボタンがある）
   const continueBtn = document.querySelector('[opename="買い物を続ける"]');
   if (continueBtn) {
-    await handleConfirmationPage(autofill, continueBtn, statusUI);
+    await handleConfirmationPage(autofill, continueBtn, statusUI, label);
     return;
   }
 
-  // ② LOTO6入力ページ検出（glonaviLoto6Form はナビにも存在するため先に確認）
+  // ② 入力ページ検出（ナビフォームはどのページにも存在するため先に確認）
   const isInputPage = await waitForElement('.m_lotteryNumInputNum_btn', 3000)
     .then(() => true).catch(() => false);
 
   if (isInputPage) {
     // バッチ2以降で前バッチのパネルが復元されている場合、最初のパネル以外がアクティブになる
-    // → glonaviLoto6Form で新しい入力ページへ移動してリセット
+    // → ナビフォームで新しい入力ページへ移動してリセット
     if ((autofill.currentIndex ?? 0) > 0) {
       const panels = [...document.querySelectorAll('.m_lotteryNumBodyItemWrap')];
       const activePanel = getActivePanel();
       const activeIndex = activePanel ? panels.indexOf(activePanel) : 0;
       if (activeIndex > 0) {
-        const loto6Form = document.getElementById('glonaviLoto6Form');
-        if (loto6Form) {
+        const navForm = document.getElementById(GLONAVI_FORM[lotteryType]);
+        if (navForm) {
           setStatus(statusUI, '入力ページをリセット中…', 'active');
           await delay(1000);
-          loto6Form.submit();
+          navForm.submit();
           return;
         }
       }
@@ -51,10 +65,10 @@ let autofillCancelled = false;
     return;
   }
 
-  // ③ ECトップページ検出（入力ボタンなし ＋ glonaviLoto6Form あり → LOTO6購入ページへ自動遷移）
-  const loto6Form = document.getElementById('glonaviLoto6Form');
-  if (loto6Form) {
-    await handleEcTopPage(autofill, loto6Form, statusUI);
+  // ③ ECトップページ検出（入力ボタンなし ＋ ナビフォームあり → 購入ページへ自動遷移）
+  const navForm = document.getElementById(GLONAVI_FORM[lotteryType]);
+  if (navForm) {
+    await handleEcTopPage(autofill, navForm, statusUI);
     return;
   }
 
@@ -101,7 +115,7 @@ async function handleInputPage(autofill, statusUI) {
   }
 }
 
-async function handleConfirmationPage(autofill, continueBtn, statusUI) {
+async function handleConfirmationPage(autofill, continueBtn, statusUI, label = 'LOTO') {
   const currentIndex = autofill.currentIndex ?? 0;
   const total = autofill.combinations.length;
 
@@ -248,7 +262,7 @@ function getActivePanel() {
 
 // ===== フローティングUI =====
 
-function createStatusUI() {
+function createStatusUI(label = 'LOTO6') {
   const div = document.createElement('div');
   div.id = 'loto6-autofill-status';
   Object.assign(div.style, {
@@ -260,7 +274,7 @@ function createStatusUI() {
   });
   div.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;white-space:normal;">
-      <span style="font-weight:bold;color:#0b72d9;">LOTO6 自動入力補助</span>
+      <span style="font-weight:bold;color:#0b72d9;">${label} 自動入力補助</span>
       <span id="loto6-stop-btn" style="display:inline-block;font-size:11px;padding:2px 8px;background:#c00;color:#fff;border-radius:4px;cursor:pointer;user-select:none;line-height:1.6;">停止</span>
     </div>
     <div id="loto6-status-msg" style="white-space:pre-wrap;">準備中…</div>
