@@ -85,7 +85,7 @@ async function handleInputPage(autofill, statusUI) {
 
     const cartBtn = findEnabledButton('カートに入れる');
     if (cartBtn) {
-      cartBtn.click();
+      await clickInMainWorld(cartBtn);
     } else {
       setStatus(statusUI, '⚠️ 「カートに入れる」が見つかりません。手動でクリックしてください。', 'error');
     }
@@ -112,7 +112,7 @@ async function handleConfirmationPage(autofill, continueBtn, statusUI) {
     [AUTOFILL_KEY]: { ...autofill, timestamp: Date.now() }
   });
   await delay(1500);
-  continueBtn.click();
+  await clickInMainWorld(continueBtn);
 }
 
 async function handleEcTopPage(autofill, loto6Form, statusUI) {
@@ -269,4 +269,29 @@ function setStatus(ui, msg, state) {
   const el = ui.querySelector('#loto6-status-msg');
   if (el) el.textContent = msg;
   ui.style.borderColor = { done: '#080', error: '#c00', active: '#0b72d9' }[state] || '#0b72d9';
+}
+
+// ===== CSP回避クリック（javascript: URL ブロック対策）=====
+
+async function clickInMainWorld(element) {
+  const selector = buildSelector(element);
+  if (!selector) { element.click(); return; }
+  try {
+    const res = await chrome.runtime.sendMessage({ type: 'clickInMainWorld', selector });
+    if (!res?.ok) {
+      console.warn('[loto6] MAIN-world click failed, fallback:', res);
+      element.click();
+    }
+  } catch {
+    element.click();
+  }
+}
+
+function buildSelector(el) {
+  if (el.id) return `#${CSS.escape(el.id)}`;
+  const opename = el.getAttribute('opename');
+  if (opename) return `[opename="${CSS.escape(opename)}"]`;
+  const marker = `loto6-t-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+  el.setAttribute('data-loto6-target', marker);
+  return `[data-loto6-target="${marker}"]`;
 }
