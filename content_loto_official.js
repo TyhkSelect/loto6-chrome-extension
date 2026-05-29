@@ -68,11 +68,11 @@ const LOTTERY_LABEL = {
   // ③ ECトップページ検出（入力ボタンなし ＋ ナビフォームあり → 購入ページへ自動遷移）
   const navForm = document.getElementById(GLONAVI_FORM[lotteryType]);
   if (navForm) {
-    await handleEcTopPage(autofill, navForm, statusUI);
+    await handleEcTopPage(autofill, navForm, statusUI, label);
     return;
   }
 
-  showPendingNotice(autofill, statusUI);
+  showPendingNotice(autofill, statusUI, label);
 })();
 
 // ===== ページ処理 =====
@@ -142,9 +142,9 @@ async function handleConfirmationPage(autofill, continueBtn, statusUI, label = '
   await clickInMainWorld(continueBtn);
 }
 
-async function handleEcTopPage(autofill, loto6Form, statusUI) {
+async function handleEcTopPage(autofill, loto6Form, statusUI, label = 'LOTO') {
   const remaining = autofill.combinations.length - (autofill.currentIndex ?? 0);
-  setStatus(statusUI, `残り${remaining}組 → LOTO6購入ページへ移動します`, 'active');
+  setStatus(statusUI, `残り${remaining}組 → ${label}購入ページへ移動します`, 'active');
 
   await chrome.storage.local.set({
     [AUTOFILL_KEY]: { ...autofill, timestamp: Date.now() }
@@ -153,10 +153,10 @@ async function handleEcTopPage(autofill, loto6Form, statusUI) {
   loto6Form.submit();
 }
 
-function showPendingNotice(autofill, statusUI) {
+function showPendingNotice(autofill, statusUI, label = 'LOTO') {
   const remaining = autofill.combinations.length - (autofill.currentIndex ?? 0);
   if (remaining <= 0) return;
-  setStatus(statusUI, `残り${remaining}組があります。\nLOTO6購入ページを開くと\n自動で入力を再開します。`, 'active');
+  setStatus(statusUI, `残り${remaining}組があります。\n${label}購入ページを開くと\n自動で入力を再開します。`, 'active');
 }
 
 // ===== 組み合わせ入力 =====
