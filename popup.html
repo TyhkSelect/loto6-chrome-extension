@@ -113,6 +113,76 @@
       text-align: center;
     }
     .status.ok { color: #080; }
+
+    /* 確認ダイアログ */
+    .confirm-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .confirm-box {
+      background: #fff;
+      border-radius: 10px;
+      padding: 18px 16px 14px;
+      width: 290px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+    .confirm-box .confirm-title {
+      font-size: 14px;
+      font-weight: bold;
+      color: #d97706;
+      margin-bottom: 10px;
+    }
+    .confirm-box .confirm-round {
+      font-size: 22px;
+      font-weight: bold;
+      color: #0b72d9;
+      margin-bottom: 4px;
+    }
+    .confirm-box .confirm-count {
+      font-size: 13px;
+      color: #333;
+      margin-bottom: 12px;
+    }
+    .confirm-box .confirm-note {
+      font-size: 11px;
+      color: #666;
+      background: #fff8e6;
+      border: 1px solid #f5c84a;
+      border-radius: 6px;
+      padding: 8px 10px;
+      margin-bottom: 14px;
+      line-height: 1.6;
+      text-align: left;
+    }
+    .confirm-buttons {
+      display: flex;
+      gap: 8px;
+    }
+    .confirm-buttons button {
+      flex: 1;
+      padding: 9px;
+      border: none;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .btn-cancel {
+      background: #eee;
+      color: #555;
+    }
+    .btn-cancel:hover { background: #ddd; }
+    .btn-confirm {
+      background: #0b72d9;
+      color: #fff;
+    }
+    .btn-confirm:hover { background: #085cab; }
   </style>
 </head>
 <body>
